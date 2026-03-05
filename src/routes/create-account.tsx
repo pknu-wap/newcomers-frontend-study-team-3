@@ -1,5 +1,9 @@
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import styled from "styled-components";
+import { auth } from "./firebase";
+import { useNavigate } from "react-router-dom";
+import { FirebaseError } from "firebase/app";
 const Title = styled.h1`
     font-size: 42px;
 `;
@@ -12,6 +16,7 @@ const Wrapper = styled.div`
     padding: 50px 0px;`;  
 const Form = styled.form`
     margin-top: 50px;
+    margin-bottom: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -35,6 +40,7 @@ const Error = styled.span`
     color: tomato;
 `;
 export default function CreateAccount() {  
+    const navigate = useNavigate();
     const [isLoading, setLoading] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -50,14 +56,24 @@ export default function CreateAccount() {
             setPassword(value);
         }
     };
-    const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError("");
+        if(isLoading || name === "" || email === "" || password === "") return;
         try{
+            setLoading(true);
+            const credentials = await createUserWithEmailAndPassword(auth, email, password);
+            console.log(credentials.user);
+            await updateProfile(credentials.user, { displayName: name });
+            navigate("/");
              // create an account
             // set the name of the user
             // redirect to the home page
         } catch(e){
-            // set error message
+            if(e instanceof FirebaseError)
+            {
+                setError(e.message);
+            }
          }
         finally{
             setLoading(false);
@@ -66,7 +82,7 @@ export default function CreateAccount() {
         console.log(name, email, password);
     }
     return <Wrapper>
-        <Title>Log into 𝕏</Title>
+        <Title>Join 𝕏</Title>
         <Form onSubmit={onSubmit}>
             <Input onChange={onChange} name ="name" value={name} placeholder="Name" type="text" required></Input>
             <Input onChange={onChange} name ="email" value={email} placeholder="Email" type="email" required></Input>
