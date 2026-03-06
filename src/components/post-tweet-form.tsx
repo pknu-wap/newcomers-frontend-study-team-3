@@ -2,7 +2,7 @@ import { styled } from "styled-components";
 import { useState } from "react";
 import { db } from "../routes/firebase";
 import { auth } from "../routes/firebase";
-import { addDoc, collection } from "@firebase/firestore";
+import { addDoc, collection, updateDoc } from "@firebase/firestore";
 const Form = styled.form`
   display: flex;
   flex-direction: column;
@@ -74,13 +74,36 @@ export default function PostTweetForm() {
       if(!user || isLoading || tweet ==="" || tweet.length > 180) return;
       try{
         setIsLoading(true);
-        await addDoc(collection(db, "tweets"), {
+        const doc = await addDoc(collection(db, "tweets"), {
           tweet,
           createdAt: Date.now(),
           username: user.displayName || "Anonymous",
           //깃허브 회원 가입하면 username 저장 안되는듯?
           userId: user.uid,
-        })
+        });
+        if(file){
+          //이미지를 base64로 인코딩해서 Firestore에 저장하기 -> 이미지 URL을 가져오기
+          //resolve, reject는 Promise 객체의 상태를 결정하는 함수입니다. 
+          //resolve는 작업이 성공적으로 완료되었을 때 호출되고, reject는 작업이 실패했을 때 호출됩니다.
+          const base64Image = await new Promise((resolve, reject) => {
+            const reader = new FileReader(); 
+
+            reader.readAsDataURL(file); 
+
+            reader.onloadend = () => { 
+              resolve(reader.result); // base64 문자열 반환(성공)
+            }; 
+            reader.onerror = reject; //파일 읽기 오류 처리(실패)
+          }
+        ); 
+          // Firestore 문서에 base64 이미지 저장
+          await updateDoc(doc, {
+            photo: base64Image,
+          });
+          //업로드가 끝나면 텍스트와 파일 초기화하기
+          setTweet(""); 
+          setFile(null);
+        }
       }
       catch(e)
       {
@@ -92,11 +115,13 @@ export default function PostTweetForm() {
      };
     return <Form onSubmit={onSubmit}>
             <TextArea 
+            required
             rows={5}
             maxLength={180}
             onChange = {onChange} value={tweet} placeholder = "What is happening?"/>
-            <AttachFileButton htmlFor="file">{file ? "Photo added" : "Add photo"}</AttachFileButton>
+            <AttachFileButton htmlFor="file">{file ? "Photo added ✅" : "Add photo"}</AttachFileButton>
             <AttachFileInput onChange = {onFileChange}type="file" id = "file" accept="image/*"/>
             <SubmitBtn type="submit" value={isLoading ? "Posting..." : "Post Tweet"} />
         </Form>
 }
+

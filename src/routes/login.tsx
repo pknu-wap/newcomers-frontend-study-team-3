@@ -41,7 +41,7 @@ export default function Login() {
             setLoading(false);
         }
        
-        console.log(name, email, password);
+        console.log(email, password);
     }
     return <Wrapper>
         <Title>Log into 𝕏</Title>
