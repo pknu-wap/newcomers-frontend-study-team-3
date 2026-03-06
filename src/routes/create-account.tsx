@@ -13,6 +13,7 @@ export default function CreateAccount() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    //이 코드들을 한 줄로 줄이는 방법
     const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {target: {name, value}} = e;
         if(name === "name"){
