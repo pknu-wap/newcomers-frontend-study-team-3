@@ -1,5 +1,8 @@
 import { styled } from "styled-components";
 import { useState } from "react";
+import { db } from "../routes/firebase";
+import { auth } from "../routes/firebase";
+import { addDoc, collection } from "@firebase/firestore";
 const Form = styled.form`
   display: flex;
   flex-direction: column;
@@ -65,7 +68,29 @@ export default function PostTweetForm() {
         setFile(files[0]);
       }
      }
-    return <Form>
+     const onSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if(!user || isLoading || tweet ==="" || tweet.length > 180) return;
+      try{
+        setIsLoading(true);
+        await addDoc(collection(db, "tweets"), {
+          tweet,
+          createdAt: Date.now(),
+          username: user.displayName || "Anonymous",
+          //깃허브 회원 가입하면 username 저장 안되는듯?
+          userId: user.uid,
+        })
+      }
+      catch(e)
+      {
+        console.log(e);
+      }
+      finally{
+        setIsLoading(false);
+      }
+     };
+    return <Form onSubmit={onSubmit}>
             <TextArea 
             rows={5}
             maxLength={180}

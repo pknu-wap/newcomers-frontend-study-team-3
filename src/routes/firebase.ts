@@ -17,5 +17,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+//Storage가 유료라서 Firestore만 사용하려고 함
 
 export default app;
