@@ -1,10 +1,15 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, orderBy, query } from "firebase/firestore";
+import { limit, onSnapshot, type Unsubscribe } from "@firebase/firestore";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { db } from "../routes/firebase";
 import Tweet from "./tweet";
 
-const Wrapper = styled.div``;
+const Wrapper = styled.div`
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+`;
 
 export interface ITweet {
     id: string;
@@ -17,26 +22,42 @@ export interface ITweet {
 
 export default function Timeline() {
     const [tweets, setTweets] = useState<ITweet[]>([]);
+        
     useEffect(() => {
-        // fetchTweets();
-        //ESLint react-hooks/set-state-in-effect 경고를 피하기 위함
-        //useEffect 내부에 async 함수(loadTweets)를 정의하여 호출하도록 구조 변경
-        const loadTweets = async () => {
+        let unsubscribe: Unsubscribe | null = null;
+        const fetchTweets = async () => {
         const tweetsQuery = query(
             collection(db, "tweets"),
-            orderBy("createdAt", "desc")
+            orderBy("createdAt", "desc"),
+            limit(25)
         );
 
-        const snapshot = await getDocs(tweetsQuery);
-
-        const tweets: ITweet[] = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<ITweet, "id">)
-        }));
-
-        setTweets(tweets);
-    };
-    loadTweets();
+        // const snapshot = await getDocs(tweetsQuery);
+        // const tweets: ITweet[] = snapshot.docs.map(doc => ({
+        //     id: doc.id,
+        //     ...(doc.data() as Omit<ITweet, "id">)
+        // }));
+        unsubscribe = await onSnapshot(tweetsQuery, (snapshot) => {
+            const tweets = snapshot.docs.map((doc) => {
+                const {tweet, createdAt, username, userId, photo} = doc.data();
+                return {
+                    tweet,
+                    createdAt,
+                    username,
+                    userId,
+                    photo,
+                    id: doc.id,
+                };
+            });
+            setTweets(tweets);
+        });
+    }
+        fetchTweets();
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
     }, []);
     
     return <Wrapper>
