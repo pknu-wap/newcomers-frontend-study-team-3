@@ -1,5 +1,4 @@
 import {Link, Outlet, useNavigate} from "react-router-dom";
-import { Wrapper } from "./auth-components";
 import styled from "styled-components";
 import { auth } from "../routes/firebase";
 
