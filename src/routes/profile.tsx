@@ -37,6 +37,7 @@ const Name = styled.span`
 `;
 
 export default function profile() {
+  // pr test
     const user = auth.currentUser
     const [avatar, setAvatar] = useState<string | null>(user?.photoURL || null)
     const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
